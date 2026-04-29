@@ -1698,10 +1698,10 @@
             cmp.maxDelay ? "amber" : "green",
           ),
           kpi(
-            "Peak Miss Increase",
-            signed(cmp.peakMissDelta),
-            "After RED - Before RED",
-            cmp.peakMissDelta > 0 ? "red" : "green",
+            "Miss SS1 -> Change to SS2",
+            cmp.active ? fmtNum(cmp.ss1ToSs2MissRows) : "0",
+            cmp.active ? "Base ETA in SS1, New ETA after SS1" : "Scenario inactive",
+            cmp.active && cmp.ss1ToSs2MissRows ? "red" : "green",
           ),
           kpi(
             "Sea Cost Uplift",
@@ -1827,6 +1827,7 @@
             delayedRows: 0,
             maxDelay: 0,
             peakMissDelta: 0,
+            ss1ToSs2MissRows: 0,
             costUplift: 0,
             costUpliftPct: 0,
           };
@@ -1842,6 +1843,15 @@
           0,
           ...rows.map((x) => x.DisruptionDelayDays || 0),
         );
+        let ss1ToSs2MissRows = rows.filter(
+          (x) =>
+            (x.DisruptionDelayDays || 0) > 0 &&
+            x.BaseETA &&
+            x.NewETA &&
+            x.SS1End &&
+            x.BaseETA <= x.SS1End &&
+            x.NewETA > x.SS1End,
+        ).length;
         let sums = sumCosts(costs);
         return {
           active: true,
@@ -1853,6 +1863,7 @@
           delayedRows,
           maxDelay,
           peakMissDelta: (after.RED || 0) - (before.RED || 0),
+          ss1ToSs2MissRows,
           costUplift: sums.uplift,
           costUpliftPct: sums.base ? sums.uplift / sums.base : 0,
         };
